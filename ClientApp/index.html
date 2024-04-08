@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Uploader</title>
+    <link rel="stylesheet" href="./css/bootstrap.min.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/all.css">
+</head>
+<body>
+    <main class="container">
+      <h1 class="my-3">Image Uploader</h1>
+      <form onsubmit="upload(event)">
+        <div class="mb-3">
+          <input type="text" class="form-control" id="imageTitle" placeholder="Enter the image's title" required>
+        </div>
+        <div class="mb-3">
+          <label for="imageFile" class="form-label">Pick an Image</label>
+          <input class="form-control" type="file" id="imageFile" onchange="validateImage()" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Upload Image</button>
+      </form>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
+    <script src="./js/bootstrap.min.js"></script>
+    <script src="./js/script.js"></script>
+</body>
+</html>
