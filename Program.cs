@@ -1,13 +1,12 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Update.Internal;
 
 var builder = WebApplication.CreateBuilder();
 builder.Services.AddAntiforgery();
 var app = builder.Build();
-app.UseAntiforgery();
 
+app.UseAntiforgery();
 app.UseStaticFiles();
 
 app.MapGet("/", (HttpContext context, IAntiforgery antiforgery) =>
@@ -46,24 +45,22 @@ app.MapGet("/", (HttpContext context, IAntiforgery antiforgery) =>
     return Results.Content(html, "text/html");
 });
 
-app.MapPost("/upload", 
-            async (
-                    [FromForm] string title, 
-                    IFormFile file, 
-                    IWebHostEnvironment env
-                    )
+app.MapPost("/upload", async (
+                            [FromForm] string title, 
+                            IFormFile file, 
+                            IWebHostEnvironment env
+                            )
     => {
         string imageTitle = title;
-        string fileTitle = file.FileName;
+        string fileExtension = Path.GetExtension(file.FileName).ToLower();
 
-        string[] parts = fileTitle.Split(".");
-        string ext = parts[parts.Length - 1];
-
-        if (ext != "png" && ext != "jpg" && ext != "gif" && ext != "jpeg")
+        // validate extension
+        if (fileExtension != ".png" && fileExtension != ".jpg" && fileExtension != ".gif" && fileExtension != ".jpeg")
         {
             return Results.LocalRedirect("/");
         }
 
+        // initialize json
         var jsonPath = Path.Combine(builder.Environment.ContentRootPath, "images.json");
         if (!File.Exists(jsonPath))
         {
@@ -71,17 +68,17 @@ app.MapPost("/upload",
             await File.WriteAllTextAsync(jsonPath, initialJson);
         }
 
-        string uniqueId = Guid.NewGuid().ToString();
-        string url = "/picture/" + uniqueId;
-
-
+        // upload image
         if (file is not null && file.Length > 0)
         {
+            string uniqueId = Guid.NewGuid().ToString();
+            string url = "/picture/" + uniqueId;
+
             var folder = Path.Combine(env.ContentRootPath, "uploaded");
             if (Directory.Exists(folder) is false)
                 Directory.CreateDirectory(folder);
 
-            var path = Path.Combine(folder, file.FileName);
+            var path = Path.Combine(folder, uniqueId + fileExtension);
             using var stream = System.IO.File.OpenWrite(path);
             await file.CopyToAsync(stream); 
 
@@ -89,9 +86,11 @@ app.MapPost("/upload",
             {
                 Title = title,
                 Id = uniqueId,
-                Path = path
+                Path = Path.Combine("uploaded", uniqueId),
+                Extension = fileExtension,
             };
 
+            // update json
             string json = await File.ReadAllTextAsync(jsonPath);
             var imagesInfo = JsonSerializer.Deserialize<List<ImageInfo>>(json);
             imagesInfo.Add(imageInfo);
@@ -105,7 +104,7 @@ app.MapPost("/upload",
         }
     });
 
-app.MapGet("/picture/{uniqueId}", async (HttpContext context, string uniqueId) => {
+app.MapGet("/picture/{uniqueId}", async (HttpContext context, [FromRoute] string uniqueId) => {
     var jsonPath = Path.Combine(builder.Environment.ContentRootPath, "images.json");
     string json = await File.ReadAllTextAsync(jsonPath);
     var imagesInfo = JsonSerializer.Deserialize<List<ImageInfo>>(json);
@@ -120,10 +119,43 @@ app.MapGet("/picture/{uniqueId}", async (HttpContext context, string uniqueId) =
         }
     }
 
-    var htmlImage = $"<h1 style=\"text-align:center\">{imageTitle}</h1> <img style=\"display:block; margin:auto; width:800px; height:600px\" src=\"http://localhost:5125/uploaded/2022-05-13%20(6).png\" alt=\"{imageTitle}\"/>";
+    var html = $"<h1 style=\"text-align:center\">{imageTitle}</h1> <img style=\"display:block; margin:auto; width:800px; height:600px\" src=\"/{imagePath}\" alt=\"{imageTitle}\"/>";
+    
+    return Results.Content(html, "text/html");
+});
 
-    context.Response.ContentType = "text/html";
-    return context.Response.WriteAsync(htmlImage);
+app.MapGet("/uploaded/{uniqueId}", async ([FromRoute] string uniqueId) =>
+{
+    var jsonPath = Path.Combine(builder.Environment.ContentRootPath, "images.json");
+    string json = await File.ReadAllTextAsync(jsonPath);
+    var imagesInfo = JsonSerializer.Deserialize<List<ImageInfo>>(json);
+
+    string imagePath = null, imageExtension = null;
+    foreach (var image in imagesInfo)
+    {
+        if (image.Id == uniqueId) {
+            imagePath = Path.Combine(builder.Environment.ContentRootPath, image.Path + image.Extension);
+            imageExtension = image.Extension;
+            break;
+        }
+    }
+
+    if (File.Exists(imagePath))
+    {
+        try
+        {
+            FileStream file = File.OpenRead(imagePath);
+            return Results.File(file, imageExtension);
+        }
+        catch(Exception ex)
+        {
+            return Results.Problem(ex.Message ?? string.Empty);
+        }
+    }
+    else
+    {
+        return Results.NotFound();
+    }
 });
 
 app.Run();
@@ -133,5 +165,5 @@ public class ImageInfo
     public string Title { get; set; }
     public string Path { get; set; }
     public string Id { get; set; }
-    public string ext { get; set; }
+    public string Extension { get; set; }
 }
