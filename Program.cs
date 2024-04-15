@@ -12,36 +12,35 @@ app.UseStaticFiles();
 app.MapGet("/", (HttpContext context, IAntiforgery antiforgery) =>
 {
     var token = antiforgery.GetAndStoreTokens(context);
-    var html = $"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Image Uploader</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    </head>
-    <body>
-        <main class="container">
-        <h1 class="my-3">Image Uploader</h1>
-        <form action="upload" method="POST" enctype="multipart/form-data">
-            <div class="mb-3">
-            <input name="{token.FormFieldName}" type="hidden" value="{token.RequestToken}" />
-            <input name="title" type="text" class="form-control" id="imageTitle" placeholder="Enter the image's title" required>
-            </div>
-            <div class="mb-3">
-            <label for="file" class="form-label">Pick an Image</label>
-            <input name="file" class="form-control" type="file" id="file" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Upload Image</button>
-        </form>
-        </main>
+    var html = $@"
+        <!DOCTYPE html>
+        <html lang=""en"">
+        <head>
+            <meta charset=""UTF-8"">
+            <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+            <title>Image Uploader</title>
+            <link href=""https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"" rel=""stylesheet"" integrity=""sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"" crossorigin=""anonymous"">
+        </head>
+        <body>
+            <main class=""container"">
+            <h1 class=""my-3"">Image Uploader</h1>
+            <form action=""upload"" method=""POST"" enctype=""multipart/form-data"">
+                <div class=""mb-3"">
+                <input name=""{token.FormFieldName}"" type=""hidden"" value=""{token.RequestToken}"" />
+                <input name=""title"" type=""text"" class=""form-control"" id=""imageTitle"" placeholder=""Enter the image's title"" required>
+                </div>
+                <div class=""mb-3"">
+                <label for=""file"" class=""form-label"">Pick an Image</label>
+                <input name=""file"" class=""form-control"" type=""file"" id=""file"" required>
+                </div>
+                <button type=""submit"" class=""btn btn-primary"">Upload Image</button>
+            </form>
+            </main>
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-        <script src="./js/script.js"></script>
-    </body>
-    </html>
-    """;
+            <script src=""https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"" integrity=""sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"" crossorigin=""anonymous""></script>
+        </body>
+        </html>";
+
     return Results.Content(html, "text/html");
 });
 
@@ -119,7 +118,11 @@ app.MapGet("/picture/{uniqueId}", async (HttpContext context, [FromRoute] string
         }
     }
 
-    var html = $"<h1 style=\"text-align:center\">{imageTitle}</h1> <img style=\"display:block; margin:auto; width:800px; height:600px\" src=\"/{imagePath}\" alt=\"{imageTitle}\"/>";
+    var html = $@"
+        <h1 style=""text-align:center"">{imageTitle}</h1>
+        <img style=""display:block; margin:auto; width:800px; height:600px"" src=""/{imagePath}"" alt=""{imageTitle}""/>
+    ";
+    // var html = $"<h1 style=\"text-align:center\">{imageTitle}</h1> <img style=\"display:block; margin:auto; width:800px; height:600px\" src=\"/{imagePath}\" alt=\"{imageTitle}\"/>";
     
     return Results.Content(html, "text/html");
 });
